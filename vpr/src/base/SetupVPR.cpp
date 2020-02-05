@@ -519,6 +519,7 @@ static void SetupPlacerOpts(const t_options& Options, t_placer_opts* PlacerOpts)
     PlacerOpts->allowed_tiles_for_delay_model = Options.allowed_tiles_for_delay_model;
 
     PlacerOpts->effort_scaling = Options.place_effort_scaling;
+    PlacerOpts->place_static_move_prob = Options.place_static_move_prob;
 }
 
 static void SetupAnalysisOpts(const t_options& Options, t_analysis_opts& analysis_opts) {
