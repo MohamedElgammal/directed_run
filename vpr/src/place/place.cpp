@@ -294,8 +294,8 @@ static e_move_result try_swap(float t,
                               float rlim_escape_fraction,
                               enum e_place_algorithm place_algorithm,
                               float timing_tradeoff,
-                              std::vector<float>& X_coord,
-                              std::vector<float>& Y_coord);
+                              std::vector<int>& X_coord,
+                              std::vector<int>& Y_coord);
 
 static void check_place(const t_placer_costs& costs,
                         const PlaceDelayModel* delay_model,
@@ -317,8 +317,8 @@ static float starting_t(t_placer_costs* costs,
                         MoveGenerator& move_generator,
                         t_pl_blocks_to_be_moved& blocks_affected,
                         const t_placer_opts& placer_opts,
-                        std::vector<float>& X_coord,
-                        std::vector<float>& Y_coord);
+                        std::vector<int>& X_coord,
+                        std::vector<int>& Y_coord);
 
 static void update_t(float* t, float rlim, float success_rat, t_annealing_sched annealing_sched);
 
@@ -397,8 +397,8 @@ static void placement_inner_loop(float t,
                                  MoveGenerator& move_generator,
                                  t_pl_blocks_to_be_moved& blocks_affected,
                                  SetupTimingInfo& timing_info,
-                                 std::vector<float>& X_coord,
-                                 std::vector<float>& Y_coord);
+                                 std::vector<int>& X_coord,
+                                 std::vector<int>& Y_coord);
 
 static void recompute_costs_from_scratch(const t_placer_opts& placer_opts, const PlaceDelayModel* delay_model, t_placer_costs* costs);
 
@@ -645,7 +645,7 @@ void try_place(const t_placer_opts& placer_opts,
     final_rlim = 1;
     inverse_delta_rlim = 1 / (first_rlim - final_rlim);
 
-    std::vector<float> X_coord, Y_coord;
+    std::vector<int> X_coord, Y_coord;
 
     t = starting_t(&costs, &prev_inverse_costs,
                    annealing_sched, move_lim, rlim,
@@ -936,8 +936,8 @@ static void placement_inner_loop(float t,
                                  MoveGenerator& move_generator,
                                  t_pl_blocks_to_be_moved& blocks_affected,
                                  SetupTimingInfo& timing_info,
-                                 std::vector<float>& X_coord,
-                                 std::vector<float>& Y_coord) {
+                                 std::vector<int>& X_coord,
+                                 std::vector<int>& Y_coord) {
     int inner_crit_iter_count, inner_iter;
 
     int inner_placement_save_count = 0; //How many times have we dumped placement to a file this temperature?
@@ -1156,8 +1156,8 @@ static float starting_t(t_placer_costs* costs,
                         MoveGenerator& move_generator,
                         t_pl_blocks_to_be_moved& blocks_affected,
                         const t_placer_opts& placer_opts,
-                        std::vector<float>& X_coord,
-                        std::vector<float>& Y_coord) {
+                        std::vector<int>& X_coord,
+                        std::vector<int>& Y_coord) {
     /* Finds the starting temperature (hot condition).              */
 
     int i, num_accepted, move_lim;
@@ -1256,8 +1256,8 @@ static e_move_result try_swap(float t,
                               float rlim_escape_fraction,
                               enum e_place_algorithm place_algorithm,
                               float timing_tradeoff,
-                              std::vector<float>& X_coord,
-                              std::vector<float>& Y_coord) {
+                              std::vector<int>& X_coord,
+                              std::vector<int>& Y_coord) {
     /* Picks some block and moves it to another spot.  If this spot is   *
      * occupied, switch the blocks.  Assess the change in cost function. *
      * rlim is the range limiter.                                        *
