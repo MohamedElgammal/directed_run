@@ -2,6 +2,7 @@
 #include <cmath>
 #include <memory>
 #include <fstream>
+#include <numeric>
 
 #include "vtr_assert.h"
 #include "vtr_log.h"
@@ -32,6 +33,7 @@
 #include "move_transactions.h"
 #include "move_utils.h"
 #include "read_place.h"
+
 
 #include "static_move_generator.h"
 
@@ -295,7 +297,11 @@ static e_move_result try_swap(float t,
                               enum e_place_algorithm place_algorithm,
                               float timing_tradeoff,
                               std::vector<int>& X_coord,
-                              std::vector<int>& Y_coord);
+                              std::vector<int>& Y_coord,
+                              std::vector<int>& num_moves,
+                              std::vector<int>& accepted_moves,
+                              std::vector<int>& aborted_moves,
+                              int high_fanout_net);
 
 static void check_place(const t_placer_costs& costs,
                         const PlaceDelayModel* delay_model,
@@ -318,7 +324,11 @@ static float starting_t(t_placer_costs* costs,
                         t_pl_blocks_to_be_moved& blocks_affected,
                         const t_placer_opts& placer_opts,
                         std::vector<int>& X_coord,
-                        std::vector<int>& Y_coord);
+                        std::vector<int>& Y_coord,
+                        std::vector<int>& num_moves,
+                        std::vector<int>& accepted_moves,
+                        std::vector<int>& aborted_moves,
+                        int high_fanout_net);
 
 static void update_t(float* t, float rlim, float success_rat, t_annealing_sched annealing_sched);
 
@@ -398,7 +408,10 @@ static void placement_inner_loop(float t,
                                  t_pl_blocks_to_be_moved& blocks_affected,
                                  SetupTimingInfo& timing_info,
                                  std::vector<int>& X_coord,
-                                 std::vector<int>& Y_coord);
+                                 std::vector<int>& Y_coord,
+                                 std::vector<int>& num_moves,
+                                 std::vector<int>& accepted_moves,
+                                 std::vector<int>& aborted_moves);
 
 static void recompute_costs_from_scratch(const t_placer_opts& placer_opts, const PlaceDelayModel* delay_model, t_placer_costs* costs);
 
@@ -420,7 +433,10 @@ static void print_place_status(const float t,
                                const float std_dev,
                                const float rlim,
                                const float crit_exponent,
-                               size_t tot_moves);
+                               size_t tot_moves,
+                               const std::vector<int>& num_moves,
+                               const std::vector<int>& accepted_moves,
+                               const std::vector<int>& aborted_moves);
 static void print_resources_utilization();
 
 /*****************************************************************************/
@@ -485,6 +501,7 @@ void try_place(const t_placer_opts& placer_opts,
     }
 
     move_generator = std::make_unique<StaticMoveGenerator>(placer_opts.place_static_move_prob);
+
 
     width_fac = placer_opts.place_chan_width;
 
@@ -647,6 +664,11 @@ void try_place(const t_placer_opts& placer_opts,
 
     std::vector<int> X_coord, Y_coord;
 
+    //Define some variables for move generation statistics
+    std::vector<int> num_moves (4,0);
+    std::vector<int> accepted_moves (4,0);
+    std::vector<int> aborted_moves (4,0);
+
     t = starting_t(&costs, &prev_inverse_costs,
                    annealing_sched, move_lim, rlim,
                    place_delay_model.get(),
@@ -654,7 +676,11 @@ void try_place(const t_placer_opts& placer_opts,
                    blocks_affected,
                    placer_opts,
                    X_coord,
-                   Y_coord);
+                   Y_coord,
+                   num_moves,
+                   accepted_moves,
+                   aborted_moves,
+                   placer_opts.place_high_fanout_net);
 
     if (!placer_opts.move_stats_file.empty()) {
         f_move_stats_file = std::unique_ptr<FILE, decltype(&vtr::fclose)>(vtr::fopen(placer_opts.move_stats_file.c_str(), "w"), vtr::fclose);
@@ -683,6 +709,10 @@ void try_place(const t_placer_opts& placer_opts,
                                            place_delay_model.get(),
                                            *timing_info);
 
+        std::fill(num_moves.begin(),num_moves.end(),0);
+        std::fill(accepted_moves.begin(),accepted_moves.end(),0);
+        std::fill(aborted_moves.begin(),aborted_moves.end(),0);
+
         placement_inner_loop(t, num_temps, rlim, placer_opts,
                              move_lim, crit_exponent, inner_recompute_limit, &stats,
                              &costs,
@@ -694,7 +724,10 @@ void try_place(const t_placer_opts& placer_opts,
                              blocks_affected,
                              *timing_info,
                              X_coord,
-                             Y_coord);
+                             Y_coord,
+                             num_moves,
+                             accepted_moves,
+                             aborted_moves);
 
         tot_iter += move_lim;
 
@@ -713,7 +746,7 @@ void try_place(const t_placer_opts& placer_opts,
         print_place_status(t, oldt,
                            stats,
                            critical_path.delay(), sTNS, sWNS,
-                           success_rat, std_dev, rlim, crit_exponent, tot_iter);
+                           success_rat, std_dev, rlim, crit_exponent, tot_iter,num_moves,accepted_moves,aborted_moves);
 
         sprintf(msg, "Cost: %g  BB Cost %g  TD Cost %g  Temperature: %g",
                 costs.cost, costs.bb_cost, costs.timing_cost, t);
@@ -747,6 +780,8 @@ void try_place(const t_placer_opts& placer_opts,
 
     /* Run inner loop again with temperature = 0 so as to accept only swaps
      * which reduce the cost of the placement */
+    std::fill(num_moves.begin(),num_moves.end(),0);
+    std::fill(accepted_moves.begin(),accepted_moves.end(),0);
     placement_inner_loop(t, num_temps, rlim, placer_opts,
                          move_lim, crit_exponent, inner_recompute_limit, &stats,
                          &costs,
@@ -758,7 +793,10 @@ void try_place(const t_placer_opts& placer_opts,
                          blocks_affected,
                          *timing_info,
                          X_coord,
-                         Y_coord);
+                         Y_coord,
+                         num_moves,
+                         accepted_moves,
+                         aborted_moves);
 
     tot_iter += move_lim;
     ++num_temps;
@@ -773,7 +811,7 @@ void try_place(const t_placer_opts& placer_opts,
 
     print_place_status(t, oldt, stats,
                        critical_path.delay(), sTNS, sWNS,
-                       success_rat, std_dev, rlim, crit_exponent, tot_iter);
+                       success_rat, std_dev, rlim, crit_exponent, tot_iter,num_moves,accepted_moves,aborted_moves);
 
     if (placer_opts.placement_saves_per_temperature >= 1) {
         std::string filename = vtr::string_fmt("placement_%03d_%03d.place", num_temps + 1, 0);
@@ -937,7 +975,10 @@ static void placement_inner_loop(float t,
                                  t_pl_blocks_to_be_moved& blocks_affected,
                                  SetupTimingInfo& timing_info,
                                  std::vector<int>& X_coord,
-                                 std::vector<int>& Y_coord) {
+                                 std::vector<int>& Y_coord,
+                                 std::vector<int>& num_moves,
+                                 std::vector<int>& accepted_moves,
+                                 std::vector<int>& aborted_moves) {
     int inner_crit_iter_count, inner_iter;
 
     int inner_placement_save_count = 0; //How many times have we dumped placement to a file this temperature?
@@ -960,7 +1001,11 @@ static void placement_inner_loop(float t,
                                              placer_opts.place_algorithm,
                                              placer_opts.timing_tradeoff,
                                              X_coord,
-                                             Y_coord);
+                                             Y_coord,
+                                             num_moves,
+                                             accepted_moves,
+                                             aborted_moves,
+                                             placer_opts.place_high_fanout_net);
 
         if (swap_result == ACCEPTED) {
             /* Move was accepted.  Update statistics that are useful for the annealing schedule. */
@@ -1157,7 +1202,11 @@ static float starting_t(t_placer_costs* costs,
                         t_pl_blocks_to_be_moved& blocks_affected,
                         const t_placer_opts& placer_opts,
                         std::vector<int>& X_coord,
-                        std::vector<int>& Y_coord) {
+                        std::vector<int>& Y_coord,
+                        std::vector<int>& num_moves,
+                        std::vector<int>& accepted_moves,
+                        std::vector<int>& aborted_moves,
+                        int high_fanout_net) {
     /* Finds the starting temperature (hot condition).              */
 
     int i, num_accepted, move_lim;
@@ -1185,7 +1234,11 @@ static float starting_t(t_placer_costs* costs,
                                              placer_opts.place_algorithm,
                                              placer_opts.timing_tradeoff,
                                              X_coord,
-                                             Y_coord);
+                                             Y_coord,
+                                             num_moves,
+                                             accepted_moves,
+                                             aborted_moves,
+                                             high_fanout_net);
 
         if (swap_result == ACCEPTED) {
             num_accepted++;
@@ -1257,13 +1310,19 @@ static e_move_result try_swap(float t,
                               enum e_place_algorithm place_algorithm,
                               float timing_tradeoff,
                               std::vector<int>& X_coord,
-                              std::vector<int>& Y_coord) {
+                              std::vector<int>& Y_coord,
+                              std::vector<int>& num_moves,
+                              std::vector<int>& accepted_moves,
+                              std::vector<int>& aborted_moves,
+                              int high_fanout_net) {
     /* Picks some block and moves it to another spot.  If this spot is   *
      * occupied, switch the blocks.  Assess the change in cost function. *
      * rlim is the range limiter.                                        *
      * Returns whether the swap is accepted, rejected or aborted.        *
      * Passes back the new value of the cost functions.                  */
 
+    int type; //move type number
+    
     num_ts_called++;
 
     MoveOutcomeStats move_outcome_stats;
@@ -1283,7 +1342,7 @@ static e_move_result try_swap(float t,
 
     //Generate a new move (perturbation) used to explore the space of possible placements
     e_create_move create_move_outcome = move_generator.propose_move(blocks_affected
-      , rlim, X_coord, Y_coord);
+      , rlim, X_coord, Y_coord, num_moves, type, high_fanout_net);
 
     LOG_MOVE_STATS_PROPOSED(t, blocks_affected);
 
@@ -1299,6 +1358,8 @@ static e_move_result try_swap(float t,
                                "ABORTED", "illegal move");
 
         move_outcome = ABORTED;
+
+        ++aborted_moves[type];
     } else {
         VTR_ASSERT(create_move_outcome == e_create_move::VALID);
 
@@ -1352,6 +1413,7 @@ static e_move_result try_swap(float t,
             /* Update clb data structures since we kept the move. */
             commit_move_blocks(blocks_affected);
 
+            ++accepted_moves[type];
         } else { /* Move was rejected.  */
                  /* Reset the net cost function flags first. */
             reset_move_nets(num_nets_affected);
@@ -2636,9 +2698,13 @@ static void update_screen_debug() {
 #endif
 
 static void print_place_status_header() {
-    VTR_LOG("------- ------- ---------- ---------- ------- ---------- -------- ------- ------- ------ -------- --------- ------\n");
-    VTR_LOG("      T Av Cost Av BB Cost Av TD Cost     CPD       sTNS     sWNS Ac Rate Std Dev  R lim Crit Exp Tot Moves  Alpha\n");
-    VTR_LOG("------- ------- ---------- ---------- ------- ---------- -------- ------- ------- ------ -------- --------- ------\n");
+    //VTR_LOG("------- ------- ---------- ---------- ------- ---------- -------- ------- ------- ------ -------- --------- ------\n");
+    //VTR_LOG("      T Av Cost Av BB Cost Av TD Cost     CPD       sTNS     sWNS Ac Rate Std Dev  R lim Crit Exp Tot Moves  Alpha\n");
+    //VTR_LOG("------- ------- ---------- ---------- ------- ---------- -------- ------- ------- ------ -------- --------- ------\n");
+
+    VTR_LOG("------- ------- ---------- ---------- ------- ---------- -------- ------- ------- ------ -------- --------- ------  ------------- ------------ ------------- ----------- ------------- ------------ ------------- ----------- --------------\n");
+    VTR_LOG("      T Av Cost Av BB Cost Av TD Cost     CPD       sTNS     sWNS Ac Rate Std Dev  R lim Crit Exp Tot Moves  Alpha   pacc_Uniform  pacc_Median  paccWeMedian  pacc_WCent pabo_Uniform  pabo_Median  pabo_WeMedian  pabo_WCent Accepted_moves\n");
+    VTR_LOG("------- ------- ---------- ---------- ------- ---------- -------- ------- ------- ------ -------- --------- ------  ------------- ------------ ------------- ----------- ------------- ------------ ------------- ----------- --------------\n");
 }
 
 static void print_place_status(const float t,
@@ -2651,7 +2717,10 @@ static void print_place_status(const float t,
                                const float std_dev,
                                const float rlim,
                                const float crit_exponent,
-                               size_t tot_moves) {
+                               size_t tot_moves,
+                               const std::vector<int>& num_moves,
+                               const std::vector<int>& accepted_moves,
+                               const std::vector<int>& aborted_moves) {
     VTR_LOG(
         "%7.1e "
         "%7.3f %10.2f %-10.5g "
@@ -2664,7 +2733,13 @@ static void print_place_status(const float t,
 
     pretty_print_uint(" ", tot_moves, 10, 3);
 
-    VTR_LOG(" %6.3f\n", t / oldt);
+    VTR_LOG(" %6.3f", t / oldt);
+    VTR_LOG(" %13.4f %12.4f %13.4f %11.4f", float(accepted_moves[0])/num_moves[0], float(accepted_moves[1])/num_moves[1],
+            float(accepted_moves[2])/num_moves[2], float(accepted_moves[3])/num_moves[3]);
+
+    VTR_LOG(" %13.4f %12.4f %13.4f %11.4f %14.4f\n", float(aborted_moves[0])/num_moves[0], float(aborted_moves[1])/num_moves[1],
+            float(aborted_moves[2])/num_moves[2], float(aborted_moves[3])/num_moves[3], 
+            float(std::accumulate(accepted_moves.begin(), accepted_moves.end(),0))/tot_moves);    
     fflush(stdout);
 }
 

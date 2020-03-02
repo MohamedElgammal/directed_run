@@ -859,6 +859,7 @@ struct t_placer_opts {
     std::string read_placement_delay_lookup;
 
     std::vector<float> place_static_move_prob;
+    int place_high_fanout_net;
     // Tile types that should be used during delay sampling.
     //
     // Useful for excluding tiles that have abnormal delay behavior, e.g.
