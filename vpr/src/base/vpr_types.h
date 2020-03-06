@@ -860,6 +860,8 @@ struct t_placer_opts {
 
     std::vector<float> place_static_move_prob;
     int place_high_fanout_net;
+    float place_agent_epsilon;
+    float place_agent_gamma;
     // Tile types that should be used during delay sampling.
     //
     // Useful for excluding tiles that have abnormal delay behavior, e.g.
