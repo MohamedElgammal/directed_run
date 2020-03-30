@@ -1455,6 +1455,8 @@ static e_move_result try_swap(float t,
 
     if (move_outcome == ACCEPTED)
         move_generator.process_outcome(delta_c*-1);
+    else if(move_outcome == REJECTED)
+        move_generator.process_outcome(-1*delta_c);
     else
         move_generator.process_outcome(0);
 
