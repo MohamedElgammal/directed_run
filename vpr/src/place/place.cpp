@@ -45,6 +45,13 @@
 #include "tatum/echo_writer.hpp"
 #include "tatum/TimingReporter.hpp"
 
+#if 0
+#include <chrono>
+using namespace std::chrono;
+std::vector<double> num_of_moves (4,0);
+std::vector<double> time_of_moves (4,0);
+#endif
+
 using std::max;
 using std::min;
 
@@ -932,6 +939,12 @@ void try_place(const t_placer_opts& placer_opts,
     }
 
     free_try_swap_arrays();
+#if 0
+    VTR_LOG("time of uniform move = %f \n", time_of_moves[0]/num_of_moves[0]);
+    VTR_LOG("time of median move = %f \n", time_of_moves[1]/num_of_moves[0]);
+    VTR_LOG("time of W median move = %f \n", time_of_moves[2]/num_of_moves[2]);
+    VTR_LOG("time of W centroid move = %f \n", time_of_moves[3]/num_of_moves[3]);
+#endif
 }
 
 /* Function to recompute the criticalities before the inner loop of the annealing */
@@ -1358,10 +1371,19 @@ static e_move_result try_swap(float t,
     }
 
     //Generate a new move (perturbation) used to explore the space of possible placements
+#if 0
+    auto start = high_resolution_clock::now();
+#endif
     e_create_move create_move_outcome = move_generator.propose_move(blocks_affected
       , rlim, X_coord, Y_coord, num_moves, type, high_fanout_net);
+#if 0
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    num_of_moves[move_generator.get_last()]++;
+    time_of_moves[move_generator.get_last()] += duration.count();
 
     //VTR_LOG("###%d,%d,%d,%d\n",num_moves[0],num_moves[1],num_moves[2],num_moves[3]);
+#endif
     LOG_MOVE_STATS_PROPOSED(t, blocks_affected);
 
     e_move_result move_outcome = ABORTED;
@@ -1452,13 +1474,19 @@ static e_move_result try_swap(float t,
     }
 
     move_outcome_stats.outcome = move_outcome;
-
+/*
     if (move_outcome == ACCEPTED)
         move_generator.process_outcome(delta_c*-1);
     else if(move_outcome == REJECTED)
-        move_generator.process_outcome(-1*delta_c);
+        //move_generator.process_outcome(-0.25*delta_c);
+        move_generator.process_outcome(0);
     else
         move_generator.process_outcome(0);
+*/
+    if(delta_c < 0)
+        move_generator.process_outcome(-1*delta_c);
+    else
+        move_generator.process_outcome(-0.1*delta_c);
 
     clear_move_blocks(blocks_affected);
 
