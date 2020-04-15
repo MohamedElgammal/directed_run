@@ -52,6 +52,12 @@ std::vector<double> num_of_moves (4,0);
 std::vector<double> time_of_moves (4,0);
 #endif
 
+#ifdef VTR_ENABLE_DEBUG_LOGGING
+#include "draw_types.h"
+#include "draw_global.h"
+#include "draw_color.h"
+#endif
+
 using std::max;
 using std::min;
 
@@ -196,8 +202,7 @@ static const float cross_count[50] = {/* [0..49] */ 1.0, 1.0, 1.0, 1.0828, 1.153
 
 std::unique_ptr<FILE, decltype(&vtr::fclose)> f_move_stats_file(nullptr, vtr::fclose);
 
-#ifdef VTR_ENABLE_DEBUG_LOGGING
-
+#if 0
 #    define LOG_MOVE_STATS_HEADER()                               \
         do {                                                      \
             if (f_move_stats_file) {                              \
@@ -1008,7 +1013,7 @@ static void placement_inner_loop(float t,
                                  std::vector<int>& Y_coord,
                                  std::vector<int>& num_moves,
                                  std::vector<int>& accepted_moves,
-                                 std::vector<int>& aborted_moves) {
+                                 std::vector<int>& aborted_moves){
     int inner_crit_iter_count, inner_iter;
 
     int inner_placement_save_count = 0; //How many times have we dumped placement to a file this temperature?
@@ -1382,7 +1387,6 @@ static e_move_result try_swap(float t,
     num_of_moves[move_generator.get_last()]++;
     time_of_moves[move_generator.get_last()] += duration.count();
 
-    //VTR_LOG("###%d,%d,%d,%d\n",num_moves[0],num_moves[1],num_moves[2],num_moves[3]);
 #endif
     LOG_MOVE_STATS_PROPOSED(t, blocks_affected);
 
@@ -1488,6 +1492,43 @@ static e_move_result try_swap(float t,
     else
         move_generator.process_outcome(-0.1*delta_c);
 
+    
+#ifdef VTR_ENABLE_DEBUG_LOGGING
+    if(f_placer_debug){
+        std::string msg;
+
+        if(type == 0)
+            msg = vtr::string_fmt("UNIFORM");
+        else if(type == 1)
+            msg = vtr::string_fmt("MEDIAN");
+        else if(type == 2)
+            msg = vtr::string_fmt("WEIGHTED MEDIAN");
+        else if(type == 3)
+            msg = vtr::string_fmt("WEIGHTED CENTROID");
+
+
+        if(move_outcome == 0)
+            msg += vtr::string_fmt(", Rejected, Delta_cost: %1.6f (bb_delta_cost= %1.5f , timing_delta_c= %6.1e)", delta_c, bb_delta_c, timing_delta_c);
+        else if(move_outcome == 1)
+            msg += vtr::string_fmt(", Accepted, Delta_cost: %1.6f (bb_delta_cost= %1.5f , timing_delta_c= %6.1e)", delta_c, bb_delta_c, timing_delta_c);
+        else if (move_outcome == 2)
+            msg += vtr::string_fmt(", Aborted, Delta_cost: %1.6f (bb_delta_cost= %1.5f , timing_delta_c= %6.1e)", delta_c, bb_delta_c, timing_delta_c);
+
+   
+             
+        auto& cluster_ctx = g_vpr_ctx.clustering();
+        
+        deselect_all();
+        draw_highlight_blocks_color(cluster_ctx.clb_nlist.block_type(blocks_affected.moved_blocks[0].block_num), blocks_affected.moved_blocks[0].block_num); 
+        t_draw_state* draw_state = get_draw_state_vars();
+        draw_state->colored_blocks.clear();
+        
+        draw_state->colored_blocks.push_back(std::make_pair(blocks_affected.moved_blocks[0].old_loc, blk_GOLD));
+        draw_state->colored_blocks.push_back(std::make_pair(blocks_affected.moved_blocks[0].new_loc, blk_GREEN));
+
+        update_screen(ScreenUpdatePriority::MAJOR, msg.c_str(), PLACEMENT, nullptr);
+    }
+#endif
     clear_move_blocks(blocks_affected);
 
     //VTR_ASSERT(check_macro_placement_consistency() == 0);

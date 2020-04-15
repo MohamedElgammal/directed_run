@@ -4,6 +4,12 @@
 #include "move_transactions.h"
 #include "compressed_grid.h"
 
+//Run-time flag to control when placer debug information is printed
+//Note : only enables debug output if compiled with VTR_ENABLE_DEBUG_LOGGING is defined
+extern bool f_placer_debug;
+
+
+
 /* This is for the placement swap routines. A swap attempt could be       *
  * rejected, accepted or aborted (due to the limitations placed on the    *
  * carry chain support at this point).                                    */
