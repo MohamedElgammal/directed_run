@@ -998,7 +998,9 @@ static void drawplace(ezgl::renderer* g) {
                         auto tile_type = device_ctx.grid[i][j].type;
                         logical_block_type = pick_best_logical_type(tile_type);
                     }
+#ifdef  VTR_ENABLE_DEBUG_LOGGING 
                 }
+#endif
                 g->set_color(block_color);
                 /* Get coords of current sub_tile */
                 ezgl::rectangle abs_clb_bbox = draw_coords->get_absolute_clb_bbox(i, j, k, logical_block_type);
