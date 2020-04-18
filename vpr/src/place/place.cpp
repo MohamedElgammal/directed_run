@@ -696,9 +696,9 @@ void try_place(const t_placer_opts& placer_opts,
     std::vector<int> X_coord, Y_coord;
 
     //Define some variables for move generation statistics
-    std::vector<int> num_moves (4,0);
-    std::vector<int> accepted_moves (4,0);
-    std::vector<int> aborted_moves (4,0);
+    std::vector<int> num_moves (placer_opts.place_static_move_prob.size(),0);
+    std::vector<int> accepted_moves (placer_opts.place_static_move_prob.size(),0);
+    std::vector<int> aborted_moves (placer.opts.place_static_move_prob.size(),0);
 
     t = starting_t(&costs, &prev_inverse_costs,
                    annealing_sched, move_lim, rlim,
@@ -1497,7 +1497,7 @@ static e_move_result try_swap(float t,
         move_generator.process_outcome(0);
 
 #ifdef VTR_ENABLE_DEBUG_LOGGING
-    
+
     t_draw_state* draw_state = get_draw_state_vars();
     if(f_placer_debug && draw_state->show_graphics){
         std::string msg;
@@ -1519,14 +1519,14 @@ static e_move_result try_swap(float t,
         else if (move_outcome == 2)
             msg += vtr::string_fmt(", Aborted, Delta_cost: %1.6f (bb_delta_cost= %1.5f , timing_delta_c= %6.1e)", delta_c, bb_delta_c, timing_delta_c);
 
-   
-             
+
+
         auto& cluster_ctx = g_vpr_ctx.clustering();
-        
+
         deselect_all();
-        draw_highlight_blocks_color(cluster_ctx.clb_nlist.block_type(blocks_affected.moved_blocks[0].block_num), blocks_affected.moved_blocks[0].block_num); 
+        draw_highlight_blocks_color(cluster_ctx.clb_nlist.block_type(blocks_affected.moved_blocks[0].block_num), blocks_affected.moved_blocks[0].block_num);
         draw_state->colored_blocks.clear();
-        
+
         draw_state->colored_blocks.push_back(std::make_pair(blocks_affected.moved_blocks[0].old_loc, blk_GOLD));
         draw_state->colored_blocks.push_back(std::make_pair(blocks_affected.moved_blocks[0].new_loc, blk_GREEN));
 
