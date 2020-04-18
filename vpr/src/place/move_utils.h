@@ -6,8 +6,9 @@
 
 //Run-time flag to control when placer debug information is printed
 //Note : only enables debug output if compiled with VTR_ENABLE_DEBUG_LOGGING is defined
+#ifdef VTR_ENABLE_DEBUG_LOGGING
 extern bool f_placer_debug;
-
+#endif
 
 
 /* This is for the placement swap routines. A swap attempt could be       *

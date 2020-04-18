@@ -45,6 +45,10 @@
 #include "timing_info.h"
 #include "physical_types.h"
 
+#ifdef VTR_ENABLE_DEBUG_LOGGING
+#include "move_utils.h"
+#endif
+
 #ifdef WIN32 /* For runtime tracking in WIN32. The clock() function defined in time.h will *
               * track CPU runtime.														   */
 #    include <time.h>
@@ -976,18 +980,32 @@ static void drawplace(ezgl::renderer* g) {
                 //Determine the block color
                 ezgl::color block_color;
                 t_logical_block_type_ptr logical_block_type = nullptr;
-#ifdef  VTR_ENABLE_DEBUG_LOGGING 
-                t_pl_loc curr_loc;
-                curr_loc.x = i;
-                curr_loc.y = j;
-                auto it = std::find_if(draw_state->colored_blocks.begin(),draw_state->colored_blocks.end(),[&curr_loc](const std::pair<t_pl_loc, ezgl::color>& a){return (a.first.x==curr_loc.x && a.first.y==curr_loc.y);});
-                if(it != draw_state->colored_blocks.end()){
-                    block_color = it->second;
-                    auto tile_type = device_ctx.grid[i][j].type;
-                    logical_block_type = pick_best_logical_type(tile_type);
+#ifdef  VTR_ENABLE_DEBUG_LOGGING
+                if(f_placer_debug){ 
+                    t_pl_loc curr_loc;
+                    curr_loc.x = i;
+                    curr_loc.y = j;
+                    auto it = std::find_if(draw_state->colored_blocks.begin(),draw_state->colored_blocks.end(),[&curr_loc](const std::pair<t_pl_loc, ezgl::color>& a){return (a.first.x==curr_loc.x && a.first.y==curr_loc.y);});
+                    if(it != draw_state->colored_blocks.end()){
+                        block_color = it->second;
+                        auto tile_type = device_ctx.grid[i][j].type;
+                        logical_block_type = pick_best_logical_type(tile_type);
+                    }
+                    else{
+                        if (bnum != EMPTY_BLOCK_ID) {
+                            block_color = draw_state->block_color(bnum);
+                            logical_block_type = cluster_ctx.clb_nlist.block_type(bnum);
+                        } else {
+                            block_color = get_block_type_color(device_ctx.grid[i][j].type);
+                            block_color = lighten_color(block_color, EMPTY_BLOCK_LIGHTEN_FACTOR);
+        
+                            auto tile_type = device_ctx.grid[i][j].type;
+                            logical_block_type = pick_best_logical_type(tile_type);
+                        }
+                    }
                 }
                 else{
-#endif
+
                     if (bnum != EMPTY_BLOCK_ID) {
                         block_color = draw_state->block_color(bnum);
                         logical_block_type = cluster_ctx.clb_nlist.block_type(bnum);
@@ -998,7 +1016,18 @@ static void drawplace(ezgl::renderer* g) {
                         auto tile_type = device_ctx.grid[i][j].type;
                         logical_block_type = pick_best_logical_type(tile_type);
                     }
-#ifdef  VTR_ENABLE_DEBUG_LOGGING 
+
+                }
+#else
+                if (bnum != EMPTY_BLOCK_ID) {
+                    block_color = draw_state->block_color(bnum);
+                    logical_block_type = cluster_ctx.clb_nlist.block_type(bnum);
+                } else {
+                    block_color = get_block_type_color(device_ctx.grid[i][j].type);
+                    block_color = lighten_color(block_color, EMPTY_BLOCK_LIGHTEN_FACTOR);
+    
+                    auto tile_type = device_ctx.grid[i][j].type;
+                    logical_block_type = pick_best_logical_type(tile_type);
                 }
 #endif
                 g->set_color(block_color);
