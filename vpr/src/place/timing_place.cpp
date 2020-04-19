@@ -15,6 +15,7 @@
 #include "timing_info.h"
 
 vtr::vector<ClusterNetId, float*> f_timing_place_crit; /* [0..cluster_ctx.clb_nlist.nets().size()-1][1..num_pins-1] */
+std::vector<std::pair<ClusterNetId, int>> highly_crit_pins (10);
 
 static vtr::t_chunk f_timing_place_crit_ch;
 
@@ -50,6 +51,7 @@ void load_criticalities(SetupTimingInfo& timing_info, float crit_exponent, const
      * For every pin on every net (or, equivalently, for every tedge ending
      * in that pin), f_timing_place_crit = criticality^(criticality exponent) */
 
+    highly_crit_pins.clear();
     auto& cluster_ctx = g_vpr_ctx.clustering();
     for (auto net_id : cluster_ctx.clb_nlist.nets()) {
         if (cluster_ctx.clb_nlist.net_is_ignored(net_id))
@@ -64,6 +66,9 @@ void load_criticalities(SetupTimingInfo& timing_info, float crit_exponent, const
              * Since path criticality varies much more than timing, we "sharpen" timing
              * criticality by taking it to some power, crit_exponent (between 1 and 8 by default). */
             f_timing_place_crit[net_id][ipin] = pow(clb_pin_crit, crit_exponent);
+            if(f_timing_place_crit[net_id][ipin] >= HIGH_CRIT){
+                highly_crit_pins.push_back(std::make_pair(net_id, ipin));
+            }
         }
     }
 }
