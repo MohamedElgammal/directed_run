@@ -57,6 +57,14 @@ std::vector<double> time_of_moves (5,0);
 #include "draw_types.h"
 #include "draw_global.h"
 #include "draw_color.h"
+//map of the available move types and their corresponding type number
+std::map<int,std::string> available_move_types = {
+                                {0,"Uniform"},
+                                {1,"Median"},
+                                {2,"Weighted Median"},
+                                {3,"Weighted Centroid"},
+                                {4,"Feasible Region"}                                
+};
 #endif
 
 using std::max;
@@ -1500,8 +1508,8 @@ static e_move_result try_swap(float t,
 
     t_draw_state* draw_state = get_draw_state_vars();
     if(f_placer_debug && draw_state->show_graphics){
-        std::string msg;
-
+        std::string msg = available_move_types[type];
+/*
         if(type == 0)
             msg = vtr::string_fmt("UNIFORM");
         else if(type == 1)
@@ -1510,15 +1518,23 @@ static e_move_result try_swap(float t,
             msg = vtr::string_fmt("WEIGHTED MEDIAN");
         else if(type == 3)
             msg = vtr::string_fmt("WEIGHTED CENTROID");
+*/
+        if(move_outcome == 0)
+            msg += vtr::string_fmt(", Rejected");
+        else if(move_outcome == 1)
+            msg += vtr::string_fmt(", Accepted");
+        else
+            msg += vtr::string_fmt(", Aborted");
 
-
+        msg += vtr::string_fmt(", Delta_cost: %1.6f (bb_delta_cost= %1.5f , timing_delta_c= %6.1e)", delta_c, bb_delta_c, timing_delta_c);
+/*
         if(move_outcome == 0)
             msg += vtr::string_fmt(", Rejected, Delta_cost: %1.6f (bb_delta_cost= %1.5f , timing_delta_c= %6.1e)", delta_c, bb_delta_c, timing_delta_c);
         else if(move_outcome == 1)
             msg += vtr::string_fmt(", Accepted, Delta_cost: %1.6f (bb_delta_cost= %1.5f , timing_delta_c= %6.1e)", delta_c, bb_delta_c, timing_delta_c);
         else if (move_outcome == 2)
             msg += vtr::string_fmt(", Aborted, Delta_cost: %1.6f (bb_delta_cost= %1.5f , timing_delta_c= %6.1e)", delta_c, bb_delta_c, timing_delta_c);
-
+*/
 
 
         auto& cluster_ctx = g_vpr_ctx.clustering();
