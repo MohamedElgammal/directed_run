@@ -698,7 +698,7 @@ void try_place(const t_placer_opts& placer_opts,
     //Define some variables for move generation statistics
     std::vector<int> num_moves (placer_opts.place_static_move_prob.size(),0);
     std::vector<int> accepted_moves (placer_opts.place_static_move_prob.size(),0);
-    std::vector<int> aborted_moves (placer.opts.place_static_move_prob.size(),0);
+    std::vector<int> aborted_moves (placer_opts.place_static_move_prob.size(),0);
 
     t = starting_t(&costs, &prev_inverse_costs,
                    annealing_sched, move_lim, rlim,
