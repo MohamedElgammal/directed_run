@@ -5,7 +5,7 @@
 #include "clustered_netlist_utils.h"
 #include "place_delay_model.h"
 
-const int HIGH_CRIT = 0.95;
+const float HIGH_CRIT = 0.95;
 extern std::vector<std::pair<ClusterNetId, int>> highly_crit_pins;
 std::unique_ptr<PlaceDelayModel> alloc_lookups_and_criticalities(t_chan_width_dist chan_width_dist,
                                                                  const t_placer_opts& place_opts,
