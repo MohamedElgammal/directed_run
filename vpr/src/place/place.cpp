@@ -735,6 +735,8 @@ void try_place(const t_placer_opts& placer_opts,
                    aborted_moves,
                    placer_opts.place_high_fanout_net);
 
+    float starting_temp = t;
+
     if (!placer_opts.move_stats_file.empty()) {
         f_move_stats_file = std::unique_ptr<FILE, decltype(&vtr::fclose)>(vtr::fopen(placer_opts.move_stats_file.c_str(), "w"), vtr::fclose);
         LOG_MOVE_STATS_HEADER();
@@ -743,7 +745,7 @@ void try_place(const t_placer_opts& placer_opts,
     tot_iter = 0;
     moves_since_cost_recompute = 0;
     int num_temps = 0;
-    float timing_bb_factor;
+    float timing_bb_factor = HI_LIMIT;
     //Table header
     VTR_LOG("\n");
     print_place_status_header();
@@ -765,9 +767,9 @@ void try_place(const t_placer_opts& placer_opts,
         std::fill(num_moves.begin(),num_moves.end(),0);
         std::fill(accepted_moves.begin(),accepted_moves.end(),0);
         std::fill(aborted_moves.begin(),aborted_moves.end(),0);
-        //timing_bb_factor = (annealing_sched.init_t - t)/(annealing_sched.init_t - annealing_sched.exit_t) *(HI_LIMIT-LOW_LIMIT) + LOW_LIMIT;
-        //timing_bb_factor = (t - annealing_sched.exit_t )/(annealing_sched.init_t - annealing_sched.exit_t) *(HI_LIMIT-LOW_LIMIT) + LOW_LIMIT;
-        timing_bb_factor = LOW_LIMIT;    
+        timing_bb_factor = timing_bb_factor - 0.005;
+        if(timing_bb_factor < 0.2)
+            timing_bb_factor = 0.2;
         placement_inner_loop(t, num_temps, rlim, placer_opts,
                              move_lim, crit_exponent, inner_recompute_limit, &stats,
                              &costs,
@@ -798,8 +800,7 @@ void try_place(const t_placer_opts& placer_opts,
             sTNS = timing_info->setup_total_negative_slack();
             sWNS = timing_info->setup_worst_negative_slack();
         }
-//#ifdef VTR_ENABLE_DEBUG_LOGGING
-#if 1
+#ifdef VTR_ENABLE_DEBUG_LOGGING
         print_place_statisitics(t,num_moves,accepted_moves,aborted_moves);
 #endif
         print_place_status(t, oldt,
@@ -976,7 +977,7 @@ void try_place(const t_placer_opts& placer_opts,
     }
 
     free_try_swap_arrays();
-#if 0
+#if 1
     //measure time of each move type
     VTR_LOG("time of uniform move = %f \n", time_of_moves[0]/num_of_moves[0]);
     VTR_LOG("time of median move = %f \n", time_of_moves[1]/num_of_moves[0]);
@@ -984,6 +985,7 @@ void try_place(const t_placer_opts& placer_opts,
     VTR_LOG("time of W centroid move = %f \n", time_of_moves[3]/num_of_moves[3]);
     VTR_LOG("time of feasible region move = %f \n", time_of_moves[4]/num_of_moves[4]);
     VTR_LOG("time of critical uniform move = %f \n", time_of_moves[5]/num_of_moves[5]);
+    VTR_LOG("time of centroid move = %f \n", time_of_moves[6]/num_of_moves[6]);
 #endif
 }
 
@@ -1415,12 +1417,12 @@ static e_move_result try_swap(float t,
     }
 
     //Generate a new move (perturbation) used to explore the space of possible placements
-#if 0
+#if 1 
     auto start = std::chrono::high_resolution_clock::now();
 #endif
     e_create_move create_move_outcome = move_generator.propose_move(blocks_affected
       , rlim, X_coord, Y_coord, num_moves, type, high_fanout_net);
-#if 0
+#if 1
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
 
@@ -2924,8 +2926,7 @@ bool placer_needs_lookahead(const t_vpr_setup& vpr_setup) {
 }
 
 
-//#ifdef VTR_ENABLE_DEBUG_LOGGING
-#if 1
+#ifdef VTR_ENABLE_DEBUG_LOGGING
 void print_place_statisitics(const float &t, const std::vector<int> & num_moves, const std::vector<int> & , const std::vector<int> &){
     FILE* f_ = vtr::fopen("moves_info.txt","a");
     fprintf(f_, "%1.9f", t);
