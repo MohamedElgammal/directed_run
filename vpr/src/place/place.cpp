@@ -51,8 +51,8 @@
 #if 0 //measure the move generator time
 #include <chrono>
 using namespace std::chrono;
-std::vector<double> num_of_moves (6,0);
-std::vector<double> time_of_moves (6,0);
+std::vector<double> num_of_moves (7,0);
+std::vector<double> time_of_moves (7,0);
 #endif
 
 #ifdef VTR_ENABLE_DEBUG_LOGGING
@@ -66,14 +66,16 @@ std::map<int,std::string> available_move_types = {
                                 {2,"Weighted Median"},
                                 {3,"Weighted Centroid"},
                                 {4,"Feasible Region"},
-                                {5,"Critical Uniform"}
+                                {5,"Critical Uniform"},
+                                {6,"Centroid"}
 };
 #endif
 
 using std::max;
 using std::min;
 
-#ifdef VTR_ENABLE_DEBUG_LOGGING
+//#ifdef VTR_ENABLE_DEBUG_LOGGING
+#if 1
 void print_place_statisitics(const float &, const std::vector<int> &, const std::vector<int> &, const std::vector<int> &);
 #endif
 
@@ -542,6 +544,7 @@ void try_place(const t_placer_opts& placer_opts,
         VTR_LOG("Weighted Centroid move : %f \n",placer_opts.place_static_move_prob[3]);
         VTR_LOG("Timing Feasible Region move : %f \n",placer_opts.place_static_move_prob[4]);
         VTR_LOG("Critical Uniform move : %f \n",placer_opts.place_static_move_prob[5]);
+        VTR_LOG("Centroid move : %f \n",placer_opts.place_static_move_prob[6]);
         move_generator = std::make_unique<StaticMoveGenerator>(placer_opts.place_static_move_prob);
     }
     else{
@@ -798,7 +801,8 @@ void try_place(const t_placer_opts& placer_opts,
             sTNS = timing_info->setup_total_negative_slack();
             sWNS = timing_info->setup_worst_negative_slack();
         }
-#ifdef VTR_ENABLE_DEBUG_LOGGING
+//#ifdef VTR_ENABLE_DEBUG_LOGGING
+#if 1
         print_place_statisitics(t,num_moves,accepted_moves,aborted_moves);
 #endif
         print_place_status(t, oldt,
@@ -2924,7 +2928,8 @@ bool placer_needs_lookahead(const t_vpr_setup& vpr_setup) {
 }
 
 
-#ifdef VTR_ENABLE_DEBUG_LOGGING
+//#ifdef VTR_ENABLE_DEBUG_LOGGING
+#if 1
 void print_place_statisitics(const float &t, const std::vector<int> & num_moves, const std::vector<int> & , const std::vector<int> &){
     FILE* f_ = vtr::fopen("moves_info.txt","a");
     fprintf(f_, "%1.9f", t);
