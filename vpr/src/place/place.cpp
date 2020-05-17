@@ -55,6 +55,7 @@ using namespace std::chrono;
 std::vector<double> num_of_moves (7,0);
 std::vector<double> time_of_moves (7,0);
 #endif
+
 #ifdef VTR_ENABLE_DEBUG_LOGGING
 #include "draw_types.h"
 #include "draw_global.h"
