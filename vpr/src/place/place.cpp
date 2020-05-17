@@ -47,6 +47,7 @@
 
 #define HI_LIMIT 0.8
 #define LOW_LIMIT 0.2
+int dm_rlim;
 
 #if 0 //measure the move generator time
 #include <chrono>
@@ -486,6 +487,8 @@ void try_place(const t_placer_opts& placer_opts,
      * width of the widest channel.  Place_cost_exp says what exponent the   *
      * width should be taken to when calculating costs.  This allows a       *
      * greater bias for anisotropic architectures.                           */
+
+    dm_rlim = placer_opts.place_dm_rlim;
 
     int tot_iter, move_lim = 0, moves_since_cost_recompute, width_fac, num_connections,
                   outer_crit_iter_count, inner_recompute_limit;
