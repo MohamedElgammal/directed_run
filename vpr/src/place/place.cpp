@@ -45,9 +45,13 @@
 #include "tatum/echo_writer.hpp"
 #include "tatum/TimingReporter.hpp"
 
+/*
 #define HI_LIMIT 0.8
 #define LOW_LIMIT 0.2
 #define DECAY_FACTOR 0.005
+*/
+
+float HI_LIMIT, LOW_LIMIT, DECAY_FACTOR;
 
 #if 0 //measure the move generator time
 #include <chrono>
@@ -487,6 +491,10 @@ void try_place(const t_placer_opts& placer_opts,
      * width of the widest channel.  Place_cost_exp says what exponent the   *
      * width should be taken to when calculating costs.  This allows a       *
      * greater bias for anisotropic architectures.                           */
+
+    LOW_LIMIT = placer_opts.place_low_limit;
+    HI_LIMIT = placer_opts.place_hi_limit;
+    DECAY_FACTOR = placer_opts.place_decay_factor;
 
     int tot_iter, move_lim = 0, moves_since_cost_recompute, width_fac, num_connections,
                   outer_crit_iter_count, inner_recompute_limit;
