@@ -1568,11 +1568,6 @@ argparse::ArgumentParser create_arg_parser(std::string prog_name, t_options& arg
         .default_value("0.01")
         .show_in(argparse::ShowIn::HELP_ONLY);
 
-    place_grp.add_argument(args.place_dm_rlim, "--place_dm_rlim")
-        .help(
-            "Controls the rlim for range based directed moves ")
-        .default_value("2")
-        .show_in(argparse::ShowIn::HELP_ONLY);
 
     auto& place_timing_grp = parser.add_argument_group("timing-driven placement options");
 
