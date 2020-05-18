@@ -1568,6 +1568,23 @@ argparse::ArgumentParser create_arg_parser(std::string prog_name, t_options& arg
         .default_value("0.01")
         .show_in(argparse::ShowIn::HELP_ONLY);
 
+    place_grp.add_argument(args.place_hi_limit, "--place_hi_limit")
+        .help(
+            "the high limit of reward function factor")
+        .default_value("0.8")
+        .show_in(argparse::ShowIn::HELP_ONLY);
+    
+    place_grp.add_argument(args.place_low_limit, "--place_low_limit")
+        .help(
+            "the low limit of reward function factor")
+        .default_value("0.2")
+        .show_in(argparse::ShowIn::HELP_ONLY);
+
+    place_grp.add_argument(args.place_decay_factor, "--place_decay_factor")
+        .help(
+            "the decay factor of reward function factor")
+        .default_value("0.005")
+        .show_in(argparse::ShowIn::HELP_ONLY);
 
     auto& place_timing_grp = parser.add_argument_group("timing-driven placement options");
 

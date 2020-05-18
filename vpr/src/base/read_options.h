@@ -111,7 +111,9 @@ struct t_options {
     argparse::ArgValue<bool> simpleRL_agent_placement;
     argparse::ArgValue<float> place_agent_epsilon;
     argparse::ArgValue<float> place_agent_gamma;
-
+    argparse::ArgValue<float> place_hi_limit;
+    argparse::ArgValue<float> place_low_limit;
+    argparse::ArgValue<float> place_decay_factor;
 
     /* Timing-driven placement options only */
     argparse::ArgValue<float> PlaceTimingTradeoff;

@@ -863,6 +863,10 @@ struct t_placer_opts {
     int place_high_fanout_net;
     float place_agent_epsilon;
     float place_agent_gamma;
+    float place_hi_limit;
+    float place_low_limit;
+    float place_decay_factor;
+
     // Tile types that should be used during delay sampling.
     //
     // Useful for excluding tiles that have abnormal delay behavior, e.g.

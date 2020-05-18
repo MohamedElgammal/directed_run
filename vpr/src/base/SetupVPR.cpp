@@ -524,6 +524,9 @@ static void SetupPlacerOpts(const t_options& Options, t_placer_opts* PlacerOpts)
     PlacerOpts->simpleRL_agent_placement = Options.simpleRL_agent_placement;
     PlacerOpts->place_agent_epsilon = Options.place_agent_epsilon;
     PlacerOpts->place_agent_gamma = Options.place_agent_gamma;
+    PlacerOpts->place_low_limit = Options.place_low_limit;
+    PlacerOpts->place_hi_limit = Options.place_hi_limit;
+    PlacerOpts->place_decay_factor = Options.place_decay_factor;
 }
 
 static void SetupAnalysisOpts(const t_options& Options, t_analysis_opts& analysis_opts) {

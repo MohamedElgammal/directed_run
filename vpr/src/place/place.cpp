@@ -47,6 +47,7 @@
 
 #define HI_LIMIT 0.8
 #define LOW_LIMIT 0.2
+#define DECAY_FACTOR 0.005
 
 #if 0 //measure the move generator time
 #include <chrono>
@@ -768,7 +769,7 @@ void try_place(const t_placer_opts& placer_opts,
         std::fill(num_moves.begin(),num_moves.end(),0);
         std::fill(accepted_moves.begin(),accepted_moves.end(),0);
         std::fill(aborted_moves.begin(),aborted_moves.end(),0);
-        timing_bb_factor = timing_bb_factor - 0.005;
+        timing_bb_factor = timing_bb_factor - DECAY_FACTOR;
         if(timing_bb_factor < LOW_LIMIT)
             timing_bb_factor = LOW_LIMIT;
         placement_inner_loop(t, num_temps, rlim, placer_opts,
