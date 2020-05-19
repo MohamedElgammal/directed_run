@@ -5,7 +5,7 @@
 
 #include "vtr_random.h"
 
-
+/*
 //EpsilonGreedyAgent member functions
 EpsilonGreedyAgent::EpsilonGreedyAgent(size_t k, float epsilon) {
 
@@ -142,13 +142,6 @@ void EpsilonGreedyAgent::set_k(size_t k) {
     n_ = std::vector<size_t>(k, 0);
 
     cumm_epsilon_action_prob_ = std::vector<float>(k, 1.0 / k);
-#if 0
-/*
-    if (f_) {
-        vtr::fclose(f_);
-        f_ = nullptr;
-    }
-*/
 
 #endif
     //f_ = vtr::fopen("egreedy.csv", "w");
@@ -176,7 +169,7 @@ void EpsilonGreedyAgent::set_epsilon_action_prob() {
         cumm_epsilon_action_prob_[i] = accum;
     }
 }
-
+*/
 
 
 //SimpleRL class member functions

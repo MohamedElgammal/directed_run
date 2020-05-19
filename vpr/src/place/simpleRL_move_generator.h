@@ -19,7 +19,7 @@ class KArmedBanditAgent {
     virtual void debug() = 0;
 #endif
 };
-
+/*
 class EpsilonGreedyAgent : public KArmedBanditAgent {
   public:
     EpsilonGreedyAgent(size_t k, float epsilon);
@@ -55,7 +55,7 @@ class EpsilonGreedyAgent : public KArmedBanditAgent {
     //std::vector<int> time_elapsed {7,30,40,23};
     FILE* f_ = nullptr;
 };
-
+*/
 class SoftmaxAgent : public KArmedBanditAgent {
   public:
     SoftmaxAgent(size_t k);
@@ -83,7 +83,7 @@ class SoftmaxAgent : public KArmedBanditAgent {
     size_t last_action_ = 0; //The last action proposed
     //std::vector<double> time_elapsed {1.0,4.3,5.7,3.3};
     //std::vector<double> time_elapsed {1.0,3.87,6.4,2.8,2.29};
-    std::vector<double> time_elapsed {1.0,3.6,5.4,2.5,2.1,0.8};
+    std::vector<double> time_elapsed {1.0,3.6,5.4,2.5,2.1,0.8,2.2};
     //std::vector<double> time_elapsed {1.0, 4.11, 6.67, 3.22, 1.88, 0.81};
     //std::vector<int> time_elapsed {7,30,40,23};
     FILE* f_ = nullptr;
