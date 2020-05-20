@@ -5,7 +5,7 @@
 
 #include "vtr_random.h"
 
-/*
+
 //EpsilonGreedyAgent member functions
 EpsilonGreedyAgent::EpsilonGreedyAgent(size_t k, float epsilon) {
 
@@ -143,7 +143,6 @@ void EpsilonGreedyAgent::set_k(size_t k) {
 
     cumm_epsilon_action_prob_ = std::vector<float>(k, 1.0 / k);
 
-#endif
     //f_ = vtr::fopen("egreedy.csv", "w");
     if(f_){
         fprintf(f_, "action,reward,");
@@ -169,12 +168,12 @@ void EpsilonGreedyAgent::set_epsilon_action_prob() {
         cumm_epsilon_action_prob_[i] = accum;
     }
 }
-*/
+
 
 
 //SimpleRL class member functions
-//SimpleRLMoveGenerator::SimpleRLMoveGenerator(std::unique_ptr<EpsilonGreedyAgent>& agent){
-SimpleRLMoveGenerator::SimpleRLMoveGenerator(std::unique_ptr<SoftmaxAgent>& agent){
+SimpleRLMoveGenerator::SimpleRLMoveGenerator(std::unique_ptr<EpsilonGreedyAgent>& agent){
+//SimpleRLMoveGenerator::SimpleRLMoveGenerator(std::unique_ptr<SoftmaxAgent>& agent){
 	std::unique_ptr<MoveGenerator> move_generator;
 	move_generator = std::make_unique<UniformMoveGenerator>();
 	avail_moves.push_back(std::move(move_generator));
@@ -224,6 +223,7 @@ void SimpleRLMoveGenerator::process_outcome(double reward){
  *                                  *
  *                                  */
 
+/*
 SoftmaxAgent::SoftmaxAgent(size_t k){
     set_k(k);
     set_action_prob();
@@ -353,4 +353,4 @@ void SoftmaxAgent::set_step(float gamma, int move_lim){
         }
 }
 
-
+*/
